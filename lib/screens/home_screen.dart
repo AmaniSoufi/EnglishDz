@@ -1,5 +1,7 @@
 import 'package:englishdz/colors/colors.dart';
 import 'package:englishdz/models/level_model.dart';
+import 'package:englishdz/screens/quizscreen.dart'
+    hide secondaryColor, thirdColor, primaryColor;
 import 'package:flutter/material.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -140,45 +142,55 @@ class GridviewB extends StatelessWidget {
     double height = MediaQuery.of(context).size.height;
     double width = MediaQuery.of(context).size.width;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: levelModel.color,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: levelModel.color!.withOpacity(1), // لون الظل
-            spreadRadius: 2, // مدى انتشار الظل
-            blurRadius: 8, // نعومة الظل
-            offset: const Offset(4, 2), // إزاحة الظل (x, y)
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => QuizScreen(level: levelModel.title),
           ),
-        ],
-      ),
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Image.asset(
-            levelModel.image,
-            height: height * 0.2,
-            width: width * 0.35,
-            fit: BoxFit.cover,
-          ),
-          const SizedBox(height: 10),
-          Text(
-            levelModel.title,
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: levelModel.color,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: levelModel.color!.withOpacity(1), // لون الظل
+              spreadRadius: 2, // مدى انتشار الظل
+              blurRadius: 8, // نعومة الظل
+              offset: const Offset(4, 2), // إزاحة الظل (x, y)
             ),
-          ),
-          const SizedBox(height: 5),
-          Text(
-            levelModel.subtitle,
-            style: TextStyle(fontSize: 17, color: Colors.white),
-          ),
-        ],
+          ],
+        ),
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Image.asset(
+              levelModel.image,
+              height: height * 0.2,
+              width: width * 0.35,
+              fit: BoxFit.cover,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              levelModel.title,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              levelModel.subtitle,
+              style: TextStyle(fontSize: 17, color: Colors.white),
+            ),
+          ],
+        ),
       ),
     );
   }

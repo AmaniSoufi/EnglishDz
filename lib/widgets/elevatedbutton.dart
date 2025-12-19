@@ -1,8 +1,10 @@
-import 'package:englishdz/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 
 class ElevatedButtonn extends StatelessWidget {
-  const ElevatedButtonn({super.key});
+  final String text; // نص الزر
+  final Widget route; // الـ screen اللي نروحو ليه
+
+  const ElevatedButtonn({super.key, required this.text, required this.route});
 
   @override
   Widget build(BuildContext context) {
@@ -10,17 +12,17 @@ class ElevatedButtonn extends StatelessWidget {
       onPressed: () {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => HomeScreen()),
+          MaterialPageRoute(builder: (context) => route),
         );
       },
       style: ElevatedButton.styleFrom(
-        backgroundColor: Color.fromARGB(255, 255, 210, 177),
+        backgroundColor: const Color.fromARGB(255, 255, 210, 177),
         padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
-      child: const Text(
-        "Get Started",
-        style: TextStyle(color: Colors.white, fontSize: 16),
+      child: Text(
+        text,
+        style: const TextStyle(color: Colors.white, fontSize: 16),
       ),
     );
   }
