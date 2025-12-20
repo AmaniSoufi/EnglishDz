@@ -74,7 +74,15 @@ class _QuizScreenState extends State<QuizScreen> {
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 255, 251, 226),
       appBar: AppBar(
-        title: Text("Quiz ${widget.level}"),
+        iconTheme: IconThemeData(color: primaryColor),
+        title: Text(
+          "Quiz ${widget.level}",
+          style: TextStyle(
+            color: primaryColor,
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         centerTitle: true,
         backgroundColor: const Color.fromARGB(255, 255, 251, 226),
       ),
