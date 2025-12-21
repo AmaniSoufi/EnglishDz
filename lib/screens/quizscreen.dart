@@ -1,146 +1,140 @@
 import 'package:card_stack_swiper/card_stack_swiper.dart';
+import 'package:englishdz/bloc/blocevent.dart';
+import 'package:englishdz/bloc/blocimplementation.dart';
+import 'package:englishdz/bloc/blocstate.dart';
 import 'package:englishdz/colors/colors.dart';
-import 'package:englishdz/widgets/elevatedbutton.dart';
+import 'package:englishdz/models/question_model.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-class QuizScreen extends StatefulWidget {
+class QuizScreen extends StatelessWidget {
   final String level;
   QuizScreen({super.key, required this.level});
 
-  @override
-  State<QuizScreen> createState() => _QuizScreenState();
-}
-
-class _QuizScreenState extends State<QuizScreen> {
-  final List<Map<String, dynamic>> questions = [
-    {
-      "question": "She ___ to school every day.",
-      "answers": ["go", "goes", "going", "gone"],
-    },
-    {
-      "question": "I am waiting ___ the bus stop.",
-      "answers": ["in", "at", "on", "to"],
-    },
-    {
-      "question": "We live ___ a big house.",
-      "answers": ["at", "to", "in", "on"],
-    },
-    {
-      "question": "They usually eat lunch ___ 12 o’clock.",
-      "answers": ["in", "at", "on", "to"],
-    },
-    {
-      "question": "The cat is ___ the table.",
-      "answers": ["on", "in", "to", "at"],
-    },
-    {
-      "question": "He goes ___ work every morning.",
-      "answers": ["to", "in", "at", "on"],
-    },
-    {
-      "question": "She was born ___ May.",
-      "answers": ["in", "at", "on", "to"],
-    },
-    {
-      "question": "I often watch TV ___ the evening.",
-      "answers": ["at", "in", "on", "to"],
-    },
-    {
-      "question": "We meet ___ the park after school.",
-      "answers": ["at", "on", "in", "to"],
-    },
-    {
-      "question": "Do you go ___ holiday ___ summer?",
-      "answers": ["to / in", "at / on", "in / to", "on / at"],
-    },
-  ];
-
-  final List<Color> cardColors = [primaryColor, secondaryColor, thirdColor];
-
-  // 1️⃣ نضيف CardStackController
   final CardStackSwiperController _controller = CardStackSwiperController();
+  final List<Color> cardColors = [primaryColor, secondaryColor, thirdColor];
 
   @override
   Widget build(BuildContext context) {
-    double height = MediaQuery.of(context).size.height;
+    final height = MediaQuery.of(context).size.height;
 
-    final List<Widget> cards = questions.asMap().entries.map((entry) {
-      int index = entry.key;
-      Map<String, dynamic> q = entry.value;
-      Color color = cardColors[index % cardColors.length];
-      return _quizCard(q, color);
-    }).toList();
-
-    return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 255, 251, 226),
-      appBar: AppBar(
-        iconTheme: IconThemeData(color: primaryColor),
-        title: Text(
-          "Quiz ${widget.level}",
-          style: TextStyle(
-            color: primaryColor,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        centerTitle: true,
+    return BlocProvider(
+      create: (_) => QuizBloc()..add(LoadQuestions(level)),
+      child: Scaffold(
         backgroundColor: const Color.fromARGB(255, 255, 251, 226),
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(15.0),
-            child: SizedBox(
-              height: height * 0.6,
-              child: CardStackSwiper(
-                controller: _controller, // 2️⃣ نربط Controller
-                cardsCount: cards.length,
-                cardBuilder: (context, index, h, v) {
-                  return cards[index];
-                },
-              ),
+        appBar: AppBar(
+          iconTheme: IconThemeData(color: primaryColor),
+          title: Text(
+            "Quiz $level",
+            style: TextStyle(
+              color: primaryColor,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
             ),
           ),
-          SizedBox(height: height * 0.05),
+          centerTitle: true,
+          backgroundColor: const Color.fromARGB(255, 255, 251, 226),
+        ),
+        body: BlocBuilder<QuizBloc, QuizState>(
+          builder: (context, state) {
+            if (state is QuizLoading) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (state is QuizLoaded) {
+              final questions = state.questions;
+              final selected = state.selectedAnswers;
+              final index = state.currentIndex;
 
-          ElevatedButton(
-            onPressed: () {
-              _controller.swipe(
-                CardStackSwiperDirection.right,
-              ); // 3️⃣ لما نضغط Next → نعرض البطاقة التالية
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: primaryColor,
-              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: const Text(
-              "Next",
-              style: TextStyle(color: Colors.white, fontSize: 16),
-            ),
-          ),
-        ],
+              return Column(
+                children: [
+                  // Progress bar
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    child: LinearProgressIndicator(
+                      value: index / questions.length,
+                      color: primaryColor,
+                      backgroundColor: Colors.grey[300],
+                      minHeight: 10,
+                    ),
+                  ),
+                  // Cards
+                  SizedBox(
+                    height: height * 0.65,
+                    child: Padding(
+                      padding: const EdgeInsets.only(
+                        left: 10.0,
+                        right: 10.0,
+                        bottom: 20,
+                      ),
+                      child: CardStackSwiper(
+                        controller: _controller,
+                        cardsCount: questions.length,
+                        cardBuilder: (context, i, h, v) {
+                          final q = questions[i];
+                          return _quizCard(context, q, i, selected);
+                        },
+                        onSwipe: (i, direction, velocity) {
+                          // Swipe only moves card visually, progress handled on answer
+                          return true;
+                        },
+                      ),
+                    ),
+                  ),
+                  // Next button
+                  ElevatedButton(
+                    onPressed: () {
+                      if (index < questions.length) {
+                        _controller.swipe(CardStackSwiperDirection.right);
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 30,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      "Next",
+                      style: TextStyle(color: Colors.white, fontSize: 16),
+                    ),
+                  ),
+                ],
+              );
+            } else {
+              return const Center(child: Text("Error loading quiz"));
+            }
+          },
+        ),
       ),
     );
   }
 
-  Widget _quizCard(Map<String, dynamic> q, Color color) {
+  Widget _quizCard(
+    BuildContext context,
+    Question q,
+    int index,
+    Map<int, String> selected,
+  ) {
+    String? sel = selected[index];
+
     return Container(
+      height: 100,
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: color,
+        color: cardColors[index % cardColors.length],
         borderRadius: BorderRadius.circular(50),
-        //  border: Border.all(color: Colors.white, width: 2),
         boxShadow: [
-          // ظل خفيف أسفل البطاقة
           BoxShadow(
-            color: Colors.white, // لون الظل
-            offset: const Offset(0, 6), // فقط أسفل (y=6)
-            blurRadius: 10, // نعومة الظل
-            spreadRadius: 0, // انتشار الظل
+            color: Colors.black26,
+            offset: Offset(0, 6),
+            blurRadius: 10,
           ),
         ],
       ),
@@ -148,7 +142,7 @@ class _QuizScreenState extends State<QuizScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            q["question"],
+            q.question,
             style: const TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
@@ -156,28 +150,47 @@ class _QuizScreenState extends State<QuizScreen> {
             ),
           ),
           const SizedBox(height: 20),
-          ...q["answers"].map<Widget>((ans) => _answerRow(ans)),
-        ],
-      ),
-    );
-  }
+          ...q.answers.map((ans) {
+            Color bgColor = Colors.white;
+            Color txtColor = primaryColor;
 
-  Widget _answerRow(String text) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-      width: double.infinity,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(15),
-        color: Colors.white,
-      ),
-      child: Text(
-        text,
-        style: const TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w500,
-          color: primaryColor,
-        ),
+            if (sel != null) {
+              if (ans == q.correct) {
+                bgColor = Colors.green;
+                txtColor = Colors.white;
+              } else if (ans == sel && ans != q.correct) {
+                bgColor = Colors.red;
+                txtColor = Colors.white;
+              }
+            }
+
+            return InkWell(
+              onTap: () {
+                context.read<QuizBloc>().add(SelectAnswer(index, ans));
+              },
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 14,
+                  horizontal: 16,
+                ),
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: bgColor,
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Text(
+                  ans,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
+                    color: txtColor,
+                  ),
+                ),
+              ),
+            );
+          }),
+        ],
       ),
     );
   }
