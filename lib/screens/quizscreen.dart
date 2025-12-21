@@ -55,8 +55,9 @@ class QuizScreen extends StatelessWidget {
                     child: LinearProgressIndicator(
                       value: index / questions.length,
                       color: primaryColor,
-                      backgroundColor: Colors.grey[300],
-                      minHeight: 10,
+                      backgroundColor: Colors.white,
+                      minHeight: 8,
+                      borderRadius: BorderRadius.circular(5),
                     ),
                   ),
                   // Cards
@@ -131,11 +132,7 @@ class QuizScreen extends StatelessWidget {
         color: cardColors[index % cardColors.length],
         borderRadius: BorderRadius.circular(50),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black26,
-            offset: Offset(0, 6),
-            blurRadius: 10,
-          ),
+          BoxShadow(color: Colors.white, offset: Offset(0, 6), blurRadius: 10),
         ],
       ),
       child: Column(
