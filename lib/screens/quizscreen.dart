@@ -100,10 +100,7 @@ class QuizScreen extends StatelessWidget {
                       const SizedBox(height: 16),
                       Text(
                         'لا توجد أسئلة متاحة',
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 18, color: Colors.grey[600]),
                       ),
                     ],
                   ),
@@ -119,7 +116,7 @@ class QuizScreen extends StatelessWidget {
                       vertical: 8,
                     ),
                     child: LinearProgressIndicator(
-                      value: questions.length > 0 
+                      value: questions.length > 0
                           ? (index / questions.length).clamp(0.0, 1.0)
                           : 0.0,
                       color: primaryColor,
@@ -129,22 +126,28 @@ class QuizScreen extends StatelessWidget {
                     ),
                   ),
                   // Cards - use Expanded to prevent overflow
-                  Expanded(
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.65,
                     child: Padding(
-                      padding: const EdgeInsets.only(
-                        left: 10.0,
-                        right: 10.0,
-                        bottom: 20,
-                      ),
+                      padding: const EdgeInsets.all(10.0),
                       child: CardStackSwiper(
                         controller: _controller,
                         cardsCount: questions.length,
                         cardBuilder: (context, i, h, v) {
                           final q = questions[i];
                           // Use MediaQuery to get available height for the card
-                          final screenHeight = MediaQuery.of(context).size.height;
-                          final availableHeight = screenHeight * 0.6; // Use 60% of screen height
-                          return _quizCard(context, q, i, selected, availableHeight);
+                          final screenHeight = MediaQuery.of(
+                            context,
+                          ).size.height;
+                          final availableHeight =
+                              screenHeight * 0.6; // Use 60% of screen height
+                          return _quizCard(
+                            context,
+                            q,
+                            i,
+                            selected,
+                            availableHeight,
+                          );
                         },
                         onSwipe: (i, direction, velocity) {
                           // Swipe only moves card visually, progress handled on answer
@@ -200,7 +203,7 @@ class QuizScreen extends StatelessWidget {
     double? availableHeight,
   ) {
     String? sel = selected[index];
-    
+
     // Use available height if provided, otherwise use a reasonable default
     final cardHeight = availableHeight != null && availableHeight.isFinite
         ? (availableHeight * 0.8).clamp(200.0, 600.0)
