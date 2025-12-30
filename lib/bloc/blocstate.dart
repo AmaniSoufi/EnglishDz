@@ -27,3 +27,9 @@ class QuizLoaded extends QuizState {
     );
   }
 }
+
+class QuizError extends QuizState {
+  final String message;
+  
+  QuizError(this.message);
+}

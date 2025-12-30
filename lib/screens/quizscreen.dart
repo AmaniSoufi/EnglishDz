@@ -16,8 +16,6 @@ class QuizScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final height = MediaQuery.of(context).size.height;
-
     return BlocProvider(
       create: (_) => QuizBloc()..add(LoadQuestions(level)),
       child: Scaffold(
@@ -39,10 +37,78 @@ class QuizScreen extends StatelessWidget {
           builder: (context, state) {
             if (state is QuizLoading) {
               return const Center(child: CircularProgressIndicator());
+            } else if (state is QuizError) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        size: 64,
+                        color: Colors.red[300],
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        state.message,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.red[700],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton(
+                        onPressed: () {
+                          // Retry loading questions
+                          context.read<QuizBloc>().add(LoadQuestions(level));
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primaryColor,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 12,
+                          ),
+                        ),
+                        child: const Text(
+                          'إعادة المحاولة',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
             } else if (state is QuizLoaded) {
               final questions = state.questions;
               final selected = state.selectedAnswers;
               final index = state.currentIndex;
+
+              // Safety check for empty questions
+              if (questions.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.quiz_outlined,
+                        size: 64,
+                        color: Colors.grey[400],
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'لا توجد أسئلة متاحة',
+                        style: TextStyle(
+                          fontSize: 18,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
 
               return Column(
                 children: [
@@ -53,16 +119,17 @@ class QuizScreen extends StatelessWidget {
                       vertical: 8,
                     ),
                     child: LinearProgressIndicator(
-                      value: index / questions.length,
+                      value: questions.length > 0 
+                          ? (index / questions.length).clamp(0.0, 1.0)
+                          : 0.0,
                       color: primaryColor,
                       backgroundColor: Colors.white,
                       minHeight: 8,
                       borderRadius: BorderRadius.circular(5),
                     ),
                   ),
-                  // Cards
-                  SizedBox(
-                    height: height * 0.65,
+                  // Cards - use Expanded to prevent overflow
+                  Expanded(
                     child: Padding(
                       padding: const EdgeInsets.only(
                         left: 10.0,
@@ -74,7 +141,10 @@ class QuizScreen extends StatelessWidget {
                         cardsCount: questions.length,
                         cardBuilder: (context, i, h, v) {
                           final q = questions[i];
-                          return _quizCard(context, q, i, selected);
+                          // Use MediaQuery to get available height for the card
+                          final screenHeight = MediaQuery.of(context).size.height;
+                          final availableHeight = screenHeight * 0.6; // Use 60% of screen height
+                          return _quizCard(context, q, i, selected, availableHeight);
                         },
                         onSwipe: (i, direction, velocity) {
                           // Swipe only moves card visually, progress handled on answer
@@ -84,25 +154,31 @@ class QuizScreen extends StatelessWidget {
                     ),
                   ),
                   // Next button
-                  ElevatedButton(
-                    onPressed: () {
-                      if (index < questions.length) {
-                        _controller.swipe(CardStackSwiperDirection.right);
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryColor,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 30,
-                        vertical: 12,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
                     ),
-                    child: const Text(
-                      "Next",
-                      style: TextStyle(color: Colors.white, fontSize: 16),
+                    child: ElevatedButton(
+                      onPressed: () {
+                        if (index < questions.length) {
+                          _controller.swipe(CardStackSwiperDirection.right);
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryColor,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 30,
+                          vertical: 12,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        "Next",
+                        style: TextStyle(color: Colors.white, fontSize: 16),
+                      ),
                     ),
                   ),
                 ],
@@ -121,11 +197,17 @@ class QuizScreen extends StatelessWidget {
     Question q,
     int index,
     Map<int, String> selected,
+    double? availableHeight,
   ) {
     String? sel = selected[index];
+    
+    // Use available height if provided, otherwise use a reasonable default
+    final cardHeight = availableHeight != null && availableHeight.isFinite
+        ? (availableHeight * 0.8).clamp(200.0, 600.0)
+        : 400.0;
 
     return Container(
-      height: 100,
+      height: cardHeight,
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -135,59 +217,61 @@ class QuizScreen extends StatelessWidget {
           BoxShadow(color: Colors.white, offset: Offset(0, 6), blurRadius: 10),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            q.question,
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              q.question,
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
-          ),
-          const SizedBox(height: 20),
-          ...q.answers.map((ans) {
-            Color bgColor = Colors.white;
-            Color txtColor = primaryColor;
+            const SizedBox(height: 20),
+            ...q.answers.map((ans) {
+              Color bgColor = Colors.white;
+              Color txtColor = primaryColor;
 
-            if (sel != null) {
-              if (ans == q.correct) {
-                bgColor = Colors.green;
-                txtColor = Colors.white;
-              } else if (ans == sel && ans != q.correct) {
-                bgColor = Colors.red;
-                txtColor = Colors.white;
+              if (sel != null) {
+                if (ans == q.correct) {
+                  bgColor = Colors.green;
+                  txtColor = Colors.white;
+                } else if (ans == sel && ans != q.correct) {
+                  bgColor = Colors.red;
+                  txtColor = Colors.white;
+                }
               }
-            }
 
-            return InkWell(
-              onTap: () {
-                context.read<QuizBloc>().add(SelectAnswer(index, ans));
-              },
-              child: Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.symmetric(
-                  vertical: 14,
-                  horizontal: 16,
-                ),
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: bgColor,
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: Text(
-                  ans,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w500,
-                    color: txtColor,
+              return InkWell(
+                onTap: () {
+                  context.read<QuizBloc>().add(SelectAnswer(index, ans));
+                },
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 14,
+                    horizontal: 16,
+                  ),
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: bgColor,
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: Text(
+                    ans,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
+                      color: txtColor,
+                    ),
                   ),
                 ),
-              ),
-            );
-          }),
-        ],
+              );
+            }),
+          ],
+        ),
       ),
     );
   }

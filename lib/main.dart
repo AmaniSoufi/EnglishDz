@@ -1,8 +1,12 @@
+import 'package:englishdz/config/app_config.dart';
 import 'package:englishdz/screens/home_screen.dart';
 import 'package:englishdz/screens/onboarding_screen.dart';
 import 'package:flutter/material.dart';
 
 void main() {
+  // Initialize the backend client
+  initializeQuizClient();
+  
   runApp(const EnglishDz());
 }
 
